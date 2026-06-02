@@ -4,12 +4,14 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: cp-myanez-landing
-    ports:
-      - "3000:80"
     restart: unless-stopped
-    # If you need a custom domain via Coolify or Traefik:
-    # labels:
-    #   - "traefik.enable=true"
-    #   - "traefik.http.routers.martha.rule=Host(`martha-yanez.soul23.mx`)"
-    #   - "traefik.http.routers.martha.entrypoints=websecure"
-    #   - "traefik.http.routers.martha.tls.certresolver=letsencrypt"
+    # Expose port internally for Coolify's reverse proxy (Traefik/nginx)
+    # Do NOT bind to host ports — Coolify handles routing
+    expose:
+      - "80"
+    networks:
+      - coolify
+
+networks:
+  coolify:
+    external: true
