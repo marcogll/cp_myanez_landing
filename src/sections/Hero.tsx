@@ -96,7 +96,7 @@ export default function Hero() {
               </div>
               <div className="w-px bg-sage-300" />
               <div>
-                <p className="font-serif text-2xl font-semibold" style={{ color: '#2C5E2C' }}>5+</p>
+                <p className="font-serif text-2xl font-semibold" style={{ color: '#2C5E2C' }}>10+</p>
                 <p className="font-sans text-xs font-medium uppercase tracking-wider" style={{ color: '#5C5C5C' }}>Anos</p>
               </div>
               <div className="w-px bg-sage-300" />
