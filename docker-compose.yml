@@ -7,10 +7,3 @@ services:
     restart: unless-stopped
     expose:
       - "80"
-    networks:
-      - coolify
-
-networks:
-  coolify:
-    name: coolify
-    driver: bridge
