@@ -42,7 +42,7 @@ export default function SobreMi() {
                 className="relative w-[300px] h-[380px] md:w-[360px] md:h-[460px] object-cover rounded-2xl shadow-xl"
               />
               <div className="absolute -bottom-6 -right-6 bg-white rounded-xl p-4 shadow-lg">
-                <p className="font-serif text-2xl font-bold text-forest">5+</p>
+                <p className="font-serif text-2xl font-bold text-forest">10+</p>
                 <p className="font-sans text-xs text-gray-500">Anos de experiencia</p>
               </div>
             </div>
@@ -58,7 +58,7 @@ export default function SobreMi() {
             </h2>
             <div className="about-anim mt-6 space-y-4 font-sans text-gray-600 text-sm leading-relaxed" style={{ opacity: 0, transform: 'translateY(16px)' }}>
               <p>
-                Soy Martha Yanez Pacheco, Contador Publico certificado con mas de 5 anos de experiencia ayudando a emprendedores y negocios en Saltillo, Coahuila.
+                Soy Martha Yanez Pacheco, Contador Publico certificado con mas de 10 anos de experiencia y siempre actualizandome, ayudando a emprendedores y negocios en Saltillo, Coahuila.
               </p>
               <p>
                 Como mama y emprendedora, entiendo los retos de manejar un negocio mientras cuidas de tu familia. Por eso mi enfoque es simple: organizacion, claridad y resultados. No te dejo con dudas ni papeleo sin sentido.

@@ -280,7 +280,7 @@ Realiza el análisis completo según tus instrucciones y devuelve solo el JSON v
         </div>
 
         <p className="pkg-anim text-center font-sans text-xs text-gray-400 mt-10" style={{ opacity: 0 }}>
-          * Precios en MXN. IVA incluido. Se requiere contrato minimo de 3 meses.
+          * Precios en MXN. IVA incluido. Se requiere contrato minimo de 3 meses. Los planes son 15-20% mas caros por mes que por trimestre. Pregunta por opciones anuales o semestrales.
         </p>
       </div>
 
