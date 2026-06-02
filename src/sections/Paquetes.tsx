@@ -1,4 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
+const WEBHOOK_URL = 'https://flows.soul23.cloud/webhook/wqxfno3zsft5i0mkwm5fg4pdi1y41ovsjof953ccnzooej8je';
 
 const plans = [
   {
@@ -15,6 +17,7 @@ const plans = [
     ],
     cta: 'Empieza Ahora',
     popular: false,
+    planId: 'emprendedor',
   },
   {
     name: 'Negocio',
@@ -31,6 +34,7 @@ const plans = [
     ],
     cta: 'Elegir Plan',
     popular: true,
+    planId: 'negocio',
   },
   {
     name: 'Premium',
@@ -48,11 +52,19 @@ const plans = [
     ],
     cta: 'Agendar Demo',
     popular: false,
+    planId: 'premium',
   },
 ];
 
 export default function Paquetes() {
   const ref = useRef<HTMLElement>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [form, setForm] = useState({ nombre: '', email: '', telefono: '' });
+  const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     const obs = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
@@ -71,6 +83,108 @@ export default function Paquetes() {
     if (ref.current) obs.observe(ref.current);
     return () => obs.disconnect();
   }, []);
+
+  const openModal = (planId: string) => {
+    setSelectedPlan(planId);
+    setModalOpen(true);
+    setSent(false);
+    setError(null);
+    setForm({ nombre: '', email: '', telefono: '' });
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setSelectedPlan(null);
+    setSent(false);
+    setError(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    const planName = plans.find((p) => p.planId === selectedPlan)?.name ?? 'Desconocido';
+    const now = new Date().toISOString();
+
+    const payload = {
+      // Datos del lead
+      nombre: form.nombre,
+      email: form.email,
+      telefono: form.telefono || null,
+      plan_seleccionado: planName,
+      plan_id: selectedPlan,
+      estado: 'espera_de_pago',
+      fuente: 'sitio_web_cp_myanez',
+      fecha: now,
+
+      // Prompts para el agente de análisis (Carla AI)
+      system_prompt: `Eres Carla, una asistente experta en servicios contables y fiscales en México. Tu tarea es analizar mensajes de clientes potenciales que llegan desde el sitio web de la Contadora Pública Martha Yáñez.
+
+INSTRUCCIONES:
+1. Lee el mensaje del cliente y determina la INTENCIÓN principal.
+2. Clasifica el mensaje usando estas categorías (puedes usar múltiples si aplica):
+   - Servicio: CONTABILIDAD_GENERAL, IMPUESTOS_ISR_IVA, NOMINA, AUDITORIA, CONSULTA_FISCAL, REGISTRO_EMPRESA, DECLARACION_ANUAL, OTRO
+   - Urgencia: ALTA, MEDIA, BAJA
+   - Tipo de cliente: PERSONA_FISICA, PERSONA_MORAL, EMPRENDEDOR, DESCONOCIDO
+   - Estado emocional: PREOCUPADO, NEUTRO, OPTIMISTA, FRUSTRADO
+   - Canal preferido: WHATSAPP, EMAIL, LLAMADA, NO_ESPECIFICA
+3. Genera entre 1 y 5 tags relevantes para N8N en formato snake_case.
+4. Resume en 1 oración la necesidad real del cliente.
+5. Sugiere la siguiente acción de seguimiento recomendada.
+
+FORMATO DE SALIDA (JSON estricto, sin markdown):
+{
+  "intencion": "string",
+  "categorias": {
+    "servicio": ["string"],
+    "urgencia": "string",
+    "tipo_cliente": "string",
+    "estado_emocional": "string",
+    "canal_preferido": "string"
+  },
+  "tags": ["string"],
+  "resumen_necesidad": "string",
+  "accion_recomendada": "string",
+  "notas_internas": "string"
+}`,
+
+      user_prompt: `Nuevo lead interesado en contratar un plan de servicio contable. Recibido el ${now}.
+
+DATOS DEL CLIENTE:
+- Nombre: ${form.nombre}
+- Email: ${form.email}
+- Teléfono: ${form.telefono || 'No proporcionado'}
+- Plan seleccionado: ${planName}
+- Estado: espera_de_pago
+- Fuente: sitio_web_cp_myanez
+
+Realiza el análisis completo según tus instrucciones y devuelve solo el JSON válido.`,
+    };
+
+    try {
+      const response = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al enviar. Intenta de nuevo.');
+      }
+
+      setSent(true);
+      setForm({ nombre: '', email: '', telefono: '' });
+      setTimeout(() => {
+        setSent(false);
+        closeModal();
+      }, 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error desconocido');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <section id="paquetes" ref={ref} className="py-24 md:py-32" style={{ background: '#F0F5F0' }}>
@@ -136,18 +250,31 @@ export default function Paquetes() {
                 ))}
               </ul>
 
-              <a
-                href="https://calendly.com/cpmarthayanez"
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`block w-full text-center font-sans text-sm font-semibold py-3.5 rounded-full transition-all duration-300 ${
-                  plan.popular
-                    ? 'bg-sage-400 text-forest hover:bg-sage-300'
-                    : 'bg-forest text-white hover:bg-sage-700'
-                }`}
-              >
-                {plan.cta}
-              </a>
+              {plan.cta === 'Empieza Ahora' ? (
+                <button
+                  onClick={() => openModal(plan.planId)}
+                  className={`block w-full text-center font-sans text-sm font-semibold py-3.5 rounded-full transition-all duration-300 ${
+                    plan.popular
+                      ? 'bg-sage-400 text-forest hover:bg-sage-300'
+                      : 'bg-forest text-white hover:bg-sage-700'
+                  }`}
+                >
+                  {plan.cta}
+                </button>
+              ) : (
+                <a
+                  href="https://calendly.com/cpmarthayanez"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`block w-full text-center font-sans text-sm font-semibold py-3.5 rounded-full transition-all duration-300 ${
+                    plan.popular
+                      ? 'bg-sage-400 text-forest hover:bg-sage-300'
+                      : 'bg-forest text-white hover:bg-sage-700'
+                  }`}
+                >
+                  {plan.cta}
+                </a>
+              )}
             </div>
           ))}
         </div>
@@ -156,6 +283,95 @@ export default function Paquetes() {
           * Precios en MXN. IVA incluido. Se requiere contrato minimo de 3 meses.
         </p>
       </div>
+
+      {/* Modal */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={closeModal} />
+          <div className="relative bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
+            <button
+              onClick={closeModal}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+            >
+              <span className="material-symbols-outlined text-gray-500">close</span>
+            </button>
+
+            {sent ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <div className="w-16 h-16 rounded-full bg-sage-100 flex items-center justify-center mb-4">
+                  <span className="material-symbols-outlined text-3xl text-sage-600">check_circle</span>
+                </div>
+                <h3 className="font-serif text-2xl font-semibold text-forest">Datos enviados</h3>
+                <p className="font-sans text-sm text-gray-500 mt-2">Te contactaremos para completar tu pago.</p>
+              </div>
+            ) : (
+              <>
+                <h3 className="font-serif text-2xl font-semibold text-forest mb-2">
+                  Empieza tu plan
+                </h3>
+                <p className="font-sans text-sm text-gray-500 mb-6">
+                  Déjanos tus datos para enviarte los pasos de pago y activar tu cuenta.
+                </p>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label className="font-sans text-xs font-semibold text-forest uppercase tracking-wider mb-2 block">
+                      Nombre completo
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={form.nombre}
+                      onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+                      disabled={loading}
+                      className="w-full px-4 py-3 rounded-xl bg-white border border-cream-300 font-sans text-sm text-forest outline-none focus:border-sage-400 focus:ring-2 focus:ring-sage-100 transition-all disabled:opacity-60"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-sans text-xs font-semibold text-forest uppercase tracking-wider mb-2 block">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={form.email}
+                      onChange={(e) => setForm({ ...form, email: e.target.value })}
+                      disabled={loading}
+                      className="w-full px-4 py-3 rounded-xl bg-white border border-cream-300 font-sans text-sm text-forest outline-none focus:border-sage-400 focus:ring-2 focus:ring-sage-100 transition-all disabled:opacity-60"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-sans text-xs font-semibold text-forest uppercase tracking-wider mb-2 block">
+                      Teléfono
+                    </label>
+                    <input
+                      type="tel"
+                      value={form.telefono}
+                      onChange={(e) => setForm({ ...form, telefono: e.target.value })}
+                      disabled={loading}
+                      className="w-full px-4 py-3 rounded-xl bg-white border border-cream-300 font-sans text-sm text-forest outline-none focus:border-sage-400 focus:ring-2 focus:ring-sage-100 transition-all disabled:opacity-60"
+                    />
+                  </div>
+
+                  {error && (
+                    <p className="font-sans text-sm text-red-600">{error}</p>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full font-sans text-sm font-semibold py-3.5 rounded-xl bg-forest text-white hover:bg-sage-700 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {loading ? 'Enviando...' : 'Enviar datos de pago'}
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

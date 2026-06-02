@@ -34,17 +34,67 @@ export default function Contacto() {
     setError(null);
 
     try {
+      const now = new Date().toISOString();
+      const payload = {
+        // Datos del lead
+        nombre: form.nombre,
+        email: form.email,
+        telefono: form.telefono || null,
+        mensaje: form.mensaje,
+        fuente: 'sitio_web_cp_myanez',
+        fecha: now,
+
+        // Prompts para el agente de análisis (Carla AI)
+      system_prompt: `Eres Carla, una asistente experta en servicios contables y fiscales en México. Tu tarea es analizar mensajes de clientes potenciales que llegan desde el sitio web de la Contadora Pública Martha Yáñez.
+
+INSTRUCCIONES:
+1. Lee el mensaje del cliente y determina la INTENCIÓN principal.
+2. Clasifica el mensaje usando estas categorías (puedes usar múltiples si aplica):
+   - Servicio: CONTABILIDAD_GENERAL, IMPUESTOS_ISR_IVA, NOMINA, AUDITORIA, CONSULTA_FISCAL, REGISTRO_EMPRESA, DECLARACION_ANUAL, OTRO
+   - Urgencia: ALTA, MEDIA, BAJA
+   - Tipo de cliente: PERSONA_FISICA, PERSONA_MORAL, EMPRENDEDOR, DESCONOCIDO
+   - Estado emocional: PREOCUPADO, NEUTRO, OPTIMISTA, FRUSTRADO
+   - Canal preferido: WHATSAPP, EMAIL, LLAMADA, NO_ESPECIFICA
+3. Genera entre 1 y 5 tags relevantes para N8N en formato snake_case.
+4. Resume en 1 oración la necesidad real del cliente.
+5. Sugiere la siguiente acción de seguimiento recomendada.
+
+FORMATO DE SALIDA (JSON estricto, sin markdown):
+{
+  "intencion": "string",
+  "categorias": {
+    "servicio": ["string"],
+    "urgencia": "string",
+    "tipo_cliente": "string",
+    "estado_emocional": "string",
+    "canal_preferido": "string"
+  },
+  "tags": ["string"],
+  "resumen_necesidad": "string",
+  "accion_recomendada": "string",
+  "notas_internas": "string"
+}`,
+
+        user_prompt: `Nuevo mensaje de contacto recibido el ${now}.
+
+DATOS DEL CLIENTE:
+- Nombre: ${form.nombre}
+- Email: ${form.email}
+- Teléfono: ${form.telefono || 'No proporcionado'}
+- Fuente: sitio_web_cp_myanez
+
+MENSAJE DEL CLIENTE:
+"""
+${form.mensaje}
+"""
+
+Realiza el análisis completo según tus instrucciones y devuelve solo el JSON válido.`,
+      };
+
       const response = await fetch(WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nombre: form.nombre,
-          email: form.email,
-          telefono: form.telefono || null,
-          mensaje: form.mensaje,
-          fuente: 'sitio_web_cp_myanez',
-          fecha: new Date().toISOString(),
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
