@@ -69,7 +69,15 @@ export default function Footer() {
           <p className="font-sans text-xs text-white/40 text-center">
             &copy; 2026 Martha Yañez Pacheco. Todos los derechos reservados.
           </p>
-          <div className="flex flex-col items-center gap-2 opacity-40 hover:opacity-60 transition-opacity duration-300">
+          <p className="font-sans text-xs text-white/30 max-w-sm text-center">
+            Contador Publico en Saltillo, Coahuila. Estrategia fiscal, contabilidad, impuestos.
+          </p>
+          <a
+            href="https://soul23.mx"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex flex-col items-center gap-2 opacity-40 hover:opacity-70 transition-opacity duration-300 mt-2"
+          >
             <svg
               version="1.1"
               viewBox="0 0 858.47046 253.70135"
@@ -82,10 +90,7 @@ export default function Footer() {
               </g>
             </svg>
             <span className="font-sans text-[10px] text-white/50 tracking-[0.2em] uppercase">by soul23.mx</span>
-          </div>
-          <p className="font-sans text-xs text-white/30 max-w-sm text-center">
-            Contador Publico en Saltillo, Coahuila. Estrategia fiscal, contabilidad, impuestos.
-          </p>
+          </a>
         </div>
       </div>
     </footer>
